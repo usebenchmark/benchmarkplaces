@@ -188,7 +188,13 @@ class Foursquare(Provider):
             raise APIError('An error occurred with %s API' % self.name)
 
     def get_venue_details(self, venue_id):
-        url = ''
+        url = 'https://api.foursquare.com/v2/venues/' + venue_id
+        res = requests.get(url)
+        if res.ok:
+            return res.json()['response']
+        else:
+            raise APIError('An error occurred with %s API' % self.name)
+
 
 
 class Facebook(Provider):
