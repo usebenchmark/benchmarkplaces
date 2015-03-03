@@ -1,0 +1,4 @@
+include AUTHORS CHANGES README INSTALL LICENCE
+recursive-include benchmarkplaces *.py
+include docs/Makefile
+recursive-include docs/source *
