@@ -4,14 +4,14 @@ from setuptools import find_packages
 
 setup(
     name='benchmark-places',
-    version='0.0.2',
+    version='0.0.3',
     author=u'Ken Koontz',
     author_email='kenneth.koontz@gmail.com',
     packages=find_packages(),
     license='MIT licence, see LICENCE.txt',
     url='https://github.com/usebenchmark/benchmarkplaces.git',
     description='Place abstraction',
-    long_description=open('README.md').read(),
+    long_description=open('README.rst').read(),
     install_requires = [
         'rauth',
         'requests'
