@@ -25,9 +25,62 @@ class APIError(Exception):
         return repr(self.value)
 
 
+class Serializer(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def serialize(self, data, **kwargs):
+        serialized = []
+        for i in data:
+            obj = {}
+            for k,v in kwargs.iteritems():
+                obj[k] = i.get(v)
+            obj['raw'] = i
+            serialized.append(obj)
+        return serialized
+
+
+class YelpSerializer(Serializer):
+    def search_places(self, data):
+        serialized = []
+        for i in data:
+            address = ' '.join(i['location']['display_address'])
+            obj = {'address': address, 'raw': i}
+            serialized.append(obj)
+        return serialized
+
+
+class FacebookSerializer(Serializer):
+    def search_places(self, data):
+        serialized = []
+        for i in data:
+            obj = {'address': i['location']['street'], 'raw': i}
+            serialized.append(obj)
+        return serialized
+
+
+class FoursquareSerializer(Serializer):
+    def search_places(self, data):
+        serialized = []
+        for i in data:
+            address = ' '.join(i['location']['formattedAddress'])
+            obj = {'address': address, 'raw': i}
+            serialized.append(obj)
+        return serialized
+
+
+class GoogleSerializer(Serializer):
+    def search_places(self, data):
+        return self.serialize(data, address='vicinity')
+
+    def get_place_details(self, data):
+        return self.serialize(data)
+
+
 class Provider(object):
     def __init__(self):
-        pass
+        if self.serializer:
+            self.serializer = self.serializer()
 
     def search_places(self, *args, **kwargs):
         raise NotImplementedError
@@ -38,6 +91,7 @@ class Provider(object):
 
 class Google(Provider):
     name = 'google'
+    serializer = GoogleSerializer
 
     def get_geo_coords(self, address):
         url = 'https://maps.googleapis.com/maps/api/geocode/json'
@@ -66,22 +120,37 @@ class Google(Provider):
                   'address': address,
                   'radius': RADIUS,
                   'location': coords}
+        params.update(**kwargs)
         res = requests.get(url, params=params)
 
         if res.ok:
-            return res.json()['results']
+            return self.serializer.search_places(res.json()['results'])
+        else:
+            raise APIError('An error occurred with %s API' % self.name)
+
+    def get_place_details(self, place_id, **kwargs):
+        url = 'https://maps.googleapis.com/maps/api/place/details/json'
+        params = {'key': GOOGLE_API_KEY,
+                  'placeid': place_id}
+        params.update(**kwargs)
+        res = requests.get(url, params=params)
+
+        if res.ok:
+            return res.json()['result']
         else:
             raise APIError('An error occurred with %s API' % self.name)
 
 
 class Yelp(Provider):
     name = 'yelp'
+    serializer = YelpSerializer
 
     def search_places(self, name, address, **kwargs):
         url = 'http://api.yelp.com/v2/search'
         params = {'radius_filter': RADIUS,
                   'location': address,
                   'term': name}
+        params.update(**kwargs)
 
         session = OAuth1Session(YELP_CONSUMER_KEY,
                                 YELP_CONSUMER_SECRET,
@@ -90,13 +159,14 @@ class Yelp(Provider):
         res = session.get(url, params=params)
 
         if res.ok:
-            return res.json()['businesses']
+            return self.serializer.search_places(res.json()['businesses'])
         else:
             raise APIError('An error occurred with %s API' % self.name)
 
 
 class Foursquare(Provider):
     name = 'foursquare'
+    serializer = FoursquareSerializer
 
     def search_places(self, name, address, **kwargs):
         url = 'https://api.foursquare.com/v2/venues/search'
@@ -109,15 +179,27 @@ class Foursquare(Provider):
                   'client_secret': FOURSQUARE_CLIENT_SECRET,
                   'v': FOURSQUARE_API_VERSION,
                   'll': coords}
+        params.update(**kwargs)
         res = requests.get(url, params=params)
         if res.ok:
-            return res.json()['response']['venues']
+            return self.serializer.search_places(
+                res.json()['response']['venues'])
+        else:
+            raise APIError('An error occurred with %s API' % self.name)
+
+    def get_venue_details(self, venue_id):
+        url = 'https://api.foursquare.com/v2/venues/' + venue_id
+        res = requests.get(url)
+        if res.ok:
+            return res.json()['response']
         else:
             raise APIError('An error occurred with %s API' % self.name)
 
 
+
 class Facebook(Provider):
     name = 'facebook'
+    serializer = FacebookSerializer
 
     def search_places(self, name, address, **kwargs):
         url = 'https://graph.facebook.com/search'
@@ -130,8 +212,9 @@ class Facebook(Provider):
                   'q': name,
                   'center': coords,
                   'distance': RADIUS}
+        params.update(**kwargs)
         res = requests.get(url, params=params)
         if res.ok:
-            return res.json()['data']
+            return self.serializer.search_places(res.json()['data'])
         else:
             raise APIError('An error occurred with %s API' % self.name)
