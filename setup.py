@@ -9,6 +9,7 @@ setup(
     author_email='kenneth.koontz@gmail.com',
     packages=find_packages(),
     license='MIT licence, see LICENCE.txt',
+    url='https://github.com/usebenchmark/benchmarkplaces.git',
     description='Place abstraction',
     long_description=open('README.md').read(),
     install_requires = [
