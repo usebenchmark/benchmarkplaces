@@ -163,6 +163,25 @@ class Yelp(Provider):
         else:
             raise APIError('An error occurred with %s API' % self.name)
 
+    # yelp place detail request
+    def get_yelp_details(self, yelp_id, **kwargs):
+        url = 'http://api.yelp.com/v2/business/' + yelp_id
+        params = {}
+        params.update(**kwargs)
+
+        session = OAuth1Session(YELP_CONSUMER_KEY,
+                                YELP_CONSUMER_SECRET,
+                                access_token=YELP_ACCESS_TOKEN,
+                                access_token_secret=YELP_ACCESS_TOKEN_SECRET)
+        res = session.get(url, params=params)
+
+        if res.ok:
+            return res.json()
+        else:
+            raise APIError('An error occurred with %s API' % self.name)
+
+
+
 
 class Foursquare(Provider):
     name = 'foursquare'
@@ -189,7 +208,12 @@ class Foursquare(Provider):
 
     def get_venue_details(self, venue_id):
         url = 'https://api.foursquare.com/v2/venues/' + venue_id
-        res = requests.get(url)
+        params = {
+            'client_id': FOURSQUARE_CLIENT_ID,
+            'client_secret': FOURSQUARE_CLIENT_SECRET,
+            'v': FOURSQUARE_API_VERSION
+        }
+        res = requests.get(url, params=params)
         if res.ok:
             return res.json()['response']
         else:
@@ -216,5 +240,15 @@ class Facebook(Provider):
         res = requests.get(url, params=params)
         if res.ok:
             return self.serializer.search_places(res.json()['data'])
+        else:
+            raise APIError('An error occurred with %s API' % self.name)
+
+    def get_place_details(self, facebook_id):
+        url = 'https://graph.facebook.com/v2.2/me/objects/place'
+        access_token = '%s|%s' % (FACEBOOK_APP_ID, FACEBOOK_APP_SECRET,)
+        params = {'access_token': access_token}
+        res = requests.get(url, params=params)
+        if res.ok:
+            return res.json()
         else:
             raise APIError('An error occurred with %s API' % self.name)
