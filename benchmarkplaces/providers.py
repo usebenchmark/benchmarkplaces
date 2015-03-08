@@ -165,7 +165,7 @@ class Yelp(Provider):
 
     # yelp place detail request
     def get_yelp_details(self, yelp_id, **kwargs):
-        url = 'http://api.yelp.com/v2/business/' + yelp_id
+        url = 'http://api.yelp.com/v2/business/%s' % (yelp_id)
         params = {}
         params.update(**kwargs)
 
@@ -205,7 +205,7 @@ class Foursquare(Provider):
             raise APIError('An error occurred with %s API' % self.name)
 
     def get_venue_details(self, venue_id):
-        url = 'https://api.foursquare.com/v2/venues/' + venue_id
+        url = 'https://api.foursquare.com/v2/venues/%s' % (venue_id)
         params = {
             'client_id': FOURSQUARE_CLIENT_ID,
             'client_secret': FOURSQUARE_CLIENT_SECRET,
