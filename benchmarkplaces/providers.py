@@ -68,6 +68,9 @@ class FoursquareSerializer(Serializer):
             serialized.append(obj)
         return serialized
 
+    def get_place_details(self, data):
+        return self.serialize(data)
+
 
 class GoogleSerializer(Serializer):
     def search_places(self, data):
@@ -238,5 +241,16 @@ class Facebook(Provider):
         res = requests.get(url, params=params)
         if res.ok:
             return self.serializer.search_places(res.json()['data'])
+        else:
+            raise APIError('An error occurred with %s API' % self.name)
+
+    def get_place_details(self, place_id, **kwargs):
+        url = 'https://graph.facebook.com/%s' % place_id
+        access_token = '%s|%s' % ('1451826181741782',
+                                  'JyomIcywLzeANcnL399qGh1OXn4',)
+        params = {'access_token': access_token}
+        res = requests.get(url, params=params)
+        if res.ok:
+            return res.json()
         else:
             raise APIError('An error occurred with %s API' % self.name)
