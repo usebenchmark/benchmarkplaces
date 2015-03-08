@@ -206,6 +206,11 @@ class Foursquare(Provider):
 
     def get_venue_details(self, venue_id):
         url = 'https://api.foursquare.com/v2/venues/' + venue_id
+        params = {
+            'client_id': FOURSQUARE_CLIENT_ID,
+            'client_secret': FOURSQUARE_CLIENT_SECRET,
+            'v': FOURSQUARE_API_VERSION
+        }
         res = requests.get(url)
         if res.ok:
             return res.json()['response']
