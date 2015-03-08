@@ -4,7 +4,7 @@ from setuptools import find_packages
 
 setup(
     name='benchmark-places',
-    version='0.0.4',
+    version='0.0.5',
     author=u'Ken Koontz',
     author_email='kenneth.koontz@gmail.com',
     packages=find_packages(),
