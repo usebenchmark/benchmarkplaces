@@ -166,6 +166,24 @@ class Yelp(Provider):
         else:
             raise APIError('An error occurred with %s API' % self.name)
 
+    def phone_search(self, phone, **kwargs):
+        # phone should be in the form 5558971234 not (555) 897-1234 or anything else
+        # TODO: regex remove funky formatting and return help to guide a user through formatting
+        url = 'http://api.yelp.com/v2/phone_search'
+        params = {'phone': phone}
+        params.update(**kwargs)
+
+        session = OAuth1Session(YELP_CONSUMER_KEY,
+                                YELP_CONSUMER_SECRET,
+                                access_token=YELP_ACCESS_TOKEN,
+                                access_token_secret=YELP_ACCESS_TOKEN_SECRET)
+        res = session.get(url, params=params)
+
+        if res.ok:
+            return self.serializer.search_places(res.json()['businesses'])
+        else:
+            raise APIError('An error occurred with %s API' % self.name)
+
     # yelp place detail request
     def get_yelp_details(self, yelp_id, **kwargs):
         url = 'http://api.yelp.com/v2/business/%s' % (yelp_id)
