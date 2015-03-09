@@ -33,7 +33,7 @@ class Serializer(object):
         serialized = []
         for i in data:
             obj = {}
-            for k,v in kwargs.iteritems():
+            for k, v in kwargs.iteritems():
                 obj[k] = i.get(v)
             obj['raw'] = i
             serialized.append(obj)
@@ -209,17 +209,14 @@ class Foursquare(Provider):
 
     def get_venue_details(self, venue_id):
         url = 'https://api.foursquare.com/v2/venues/%s' % (venue_id)
-        params = {
-            'client_id': FOURSQUARE_CLIENT_ID,
-            'client_secret': FOURSQUARE_CLIENT_SECRET,
-            'v': FOURSQUARE_API_VERSION
-        }
-        res = requests.get(url)
+        params = {'client_id': FOURSQUARE_CLIENT_ID,
+                  'client_secret': FOURSQUARE_CLIENT_SECRET,
+                  'v': FOURSQUARE_API_VERSION}
+        res = requests.get(url, params=params)
         if res.ok:
             return res.json()['response']
         else:
             raise APIError('An error occurred with %s API' % self.name)
-
 
 
 class Facebook(Provider):
@@ -246,8 +243,7 @@ class Facebook(Provider):
 
     def get_place_details(self, place_id, **kwargs):
         url = 'https://graph.facebook.com/%s' % place_id
-        access_token = '%s|%s' % ('1451826181741782',
-                                  'JyomIcywLzeANcnL399qGh1OXn4',)
+        access_token = '%s|%s' % (FACEBOOK_APP_ID, FACEBOOK_APP_SECRET,)
         params = {'access_token': access_token}
         res = requests.get(url, params=params)
         if res.ok:
