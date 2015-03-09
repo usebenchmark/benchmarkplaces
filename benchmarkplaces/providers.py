@@ -88,7 +88,7 @@ class Provider(object):
     def search_places(self, *args, **kwargs):
         raise NotImplementedError
 
-    def place_details(self, *args, **kwargs):
+    def get_place_details(self, *args, **kwargs):
         raise NotImplementedError
 
 
@@ -166,8 +166,7 @@ class Yelp(Provider):
         else:
             raise APIError('An error occurred with %s API' % self.name)
 
-    # yelp place detail request
-    def get_yelp_details(self, yelp_id, **kwargs):
+    def get_place_details(self, yelp_id, **kwargs):
         url = 'http://api.yelp.com/v2/business/%s' % (yelp_id)
         params = {}
         params.update(**kwargs)
@@ -207,7 +206,7 @@ class Foursquare(Provider):
         else:
             raise APIError('An error occurred with %s API' % self.name)
 
-    def get_venue_details(self, venue_id):
+    def get_place_details(self, venue_id):
         url = 'https://api.foursquare.com/v2/venues/%s' % (venue_id)
         params = {'client_id': FOURSQUARE_CLIENT_ID,
                   'client_secret': FOURSQUARE_CLIENT_SECRET,
