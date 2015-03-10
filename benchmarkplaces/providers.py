@@ -89,7 +89,9 @@ class GoogleSerializer(Serializer):
                               name='name')
 
     def get_place_details(self, data):
-        return self.serialize(data)
+        return self.serialize(data,
+                              rating_count='user_ratings_total',
+                              rating='rating')
 
 
 class Provider(object):
