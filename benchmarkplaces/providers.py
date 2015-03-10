@@ -52,6 +52,10 @@ class YelpSerializer(Serializer):
             serialized.append(obj)
         return serialized
 
+    def get_place_details(self, data):
+        return {'rating_count': data['review_count'],
+                'rating': data['rating']}
+
 
 class FacebookSerializer(Serializer):
     def search_places(self, data):
@@ -63,6 +67,11 @@ class FacebookSerializer(Serializer):
                    'raw': i}
             serialized.append(obj)
         return serialized
+
+    def get_place_details(self, data):
+        return {'likes': data['likes'],
+                'checkin_count': data['checkins'],
+                'people_talking': data['talking_about_count']}
 
 
 class FoursquareSerializer(Serializer):
@@ -78,7 +87,11 @@ class FoursquareSerializer(Serializer):
         return serialized
 
     def get_place_details(self, data):
-        return self.serialize(data)
+        return {'rating': data['rating'],
+                'checkin_count': data['stats']['checkinsCount'],
+                'likes': data['likes']['count'],
+                'user_count': data['stats']['usersCount'],
+                'tip_count': data['stats']['tipCount']}
 
 
 class GoogleSerializer(Serializer):
@@ -89,9 +102,9 @@ class GoogleSerializer(Serializer):
                               name='name')
 
     def get_place_details(self, data):
-        return self.serialize(data,
-                              rating_count='user_ratings_total',
-                              rating='rating')
+        return {'rating_count': data['user_ratings_total'],
+                'rating': data['rating'],
+                'raw': data}
 
 
 class Provider(object):
@@ -153,7 +166,7 @@ class Google(Provider):
         res = requests.get(url, params=params)
 
         if res.ok:
-            return res.json()['result']
+            return self.serializer.get_place_details(res.json()['result'])
         else:
             raise APIError('An error occurred with %s API' % self.name)
 
@@ -192,7 +205,7 @@ class Yelp(Provider):
         res = session.get(url, params=params)
 
         if res.ok:
-            return res.json()
+            return self.serializer.get_place_details(res.json())
         else:
             raise APIError('An error occurred with %s API' % self.name)
 
@@ -227,7 +240,8 @@ class Foursquare(Provider):
                   'v': FOURSQUARE_API_VERSION}
         res = requests.get(url, params=params)
         if res.ok:
-            return res.json()['response']
+            return self.serializer.get_place_details(
+                res.json()['response']['venue'])
         else:
             raise APIError('An error occurred with %s API' % self.name)
 
@@ -260,6 +274,6 @@ class Facebook(Provider):
         params = {'access_token': access_token}
         res = requests.get(url, params=params)
         if res.ok:
-            return res.json()
+            return self.serializer.get_place_details(res.json())
         else:
             raise APIError('An error occurred with %s API' % self.name)
