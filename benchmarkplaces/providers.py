@@ -13,6 +13,7 @@ FOURSQUARE_CLIENT_SECRET = os.environ.get('FOURSQUARE_CLIENT_SECRET')
 FOURSQUARE_API_VERSION = 20150228
 FACEBOOK_APP_ID = os.environ.get('FACEBOOK_APP_ID')
 FACEBOOK_APP_SECRET = os.environ.get('FACEBOOK_APP_SECRET')
+CITYGRID_PUBLISHER_ID = os.environ.get('CITYGRID_PUBLISHER_ID')
 
 RADIUS = 500  # meters
 
@@ -254,3 +255,9 @@ class Facebook(Provider):
             return res.json()
         else:
             raise APIError('An error occurred with %s API' % self.name)
+
+class CityGrid(Provider):
+    name = 'citygrid'
+    # serializer = CityGridSerializer
+
+    def search_places(self, )
