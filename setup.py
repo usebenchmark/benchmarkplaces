@@ -4,7 +4,7 @@ from setuptools import find_packages
 
 setup(
     name='benchmark-places',
-    version='0.0.6',
+    version='0.0.7',
     author=u'Ken Koontz',
     author_email='kenneth.koontz@gmail.com',
     packages=find_packages(),
@@ -18,5 +18,3 @@ setup(
     ],
     zip_safe=False,
 )
-
-# url='http://bitbucket.org/bruno/django-geoportail',
