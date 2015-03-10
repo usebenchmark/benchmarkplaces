@@ -133,7 +133,7 @@ class Google(Provider):
         lat, lng = self.get_geo_coords(address)
         coords = '%s,%s' % (lat, lng,)
         params = {'key': GOOGLE_API_KEY,
-                  'keyword': name,
+                  'name': name,
                   'address': address,
                   'radius': RADIUS,
                   'location': coords}
