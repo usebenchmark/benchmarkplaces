@@ -85,7 +85,7 @@ class GoogleSerializer(Serializer):
     def search_places(self, data):
         return self.serialize(data,
                               address='vicinity',
-                              place_id='id',
+                              place_id='place_id',
                               name='name')
 
     def get_place_details(self, data):
