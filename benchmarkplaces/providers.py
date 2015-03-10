@@ -45,7 +45,10 @@ class YelpSerializer(Serializer):
         serialized = []
         for i in data:
             address = ' '.join(i['location']['display_address'])
-            obj = {'address': address, 'raw': i}
+            obj = {'address': address,
+                   'place_id': i['id'],
+                   'name': i['name'],
+                   'raw': i}
             serialized.append(obj)
         return serialized
 
@@ -54,7 +57,10 @@ class FacebookSerializer(Serializer):
     def search_places(self, data):
         serialized = []
         for i in data:
-            obj = {'address': i['location']['street'], 'raw': i}
+            obj = {'address': i['location']['street'],
+                   'place_id': i['id'],
+                   'name': i['name'],
+                   'raw': i}
             serialized.append(obj)
         return serialized
 
@@ -64,7 +70,10 @@ class FoursquareSerializer(Serializer):
         serialized = []
         for i in data:
             address = ' '.join(i['location']['formattedAddress'])
-            obj = {'address': address, 'raw': i}
+            obj = {'address': address,
+                   'place_id': i['id'],
+                   'name': i['name'],
+                   'raw': i}
             serialized.append(obj)
         return serialized
 
@@ -74,7 +83,10 @@ class FoursquareSerializer(Serializer):
 
 class GoogleSerializer(Serializer):
     def search_places(self, data):
-        return self.serialize(data, address='vicinity')
+        return self.serialize(data,
+                              address='vicinity',
+                              place_id='id',
+                              name='name')
 
     def get_place_details(self, data):
         return self.serialize(data)
