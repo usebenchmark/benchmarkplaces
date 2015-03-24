@@ -35,7 +35,7 @@ class Serializer(object):
             obj = {}
             for k, v in kwargs.iteritems():
                 obj[k] = i.get(v)
-            obj['raw'] = i
+            obj['oem'] = i
             serialized.append(obj)
         return serialized
 
@@ -48,13 +48,14 @@ class YelpSerializer(Serializer):
             obj = {'address': address,
                    'place_id': i['id'],
                    'name': i['name'],
-                   'raw': i}
+                   'oem': i}
             serialized.append(obj)
         return serialized
 
     def get_place_details(self, data):
         return {'rating_count': data['review_count'],
-                'rating': data['rating']}
+                'rating': data['rating'],
+                'oem': data}
 
 
 class FacebookSerializer(Serializer):
@@ -64,14 +65,15 @@ class FacebookSerializer(Serializer):
             obj = {'address': i['location']['street'],
                    'place_id': i['id'],
                    'name': i['name'],
-                   'raw': i}
+                   'oem': i}
             serialized.append(obj)
         return serialized
 
     def get_place_details(self, data):
         return {'likes': data['likes'],
                 'checkin_count': data['checkins'],
-                'people_talking': data['talking_about_count']}
+                'people_talking': data['talking_about_count'],
+                'oem': data}
 
 
 class FoursquareSerializer(Serializer):
@@ -82,7 +84,7 @@ class FoursquareSerializer(Serializer):
             obj = {'address': address,
                    'place_id': i['id'],
                    'name': i['name'],
-                   'raw': i}
+                   'oem': i}
             serialized.append(obj)
         return serialized
 
@@ -91,7 +93,8 @@ class FoursquareSerializer(Serializer):
                 'checkin_count': data['stats']['checkinsCount'],
                 'likes': data['likes']['count'],
                 'user_count': data['stats']['usersCount'],
-                'tip_count': data['stats']['tipCount']}
+                'tip_count': data['stats']['tipCount'],
+                'oem': data}
 
 
 class GoogleSerializer(Serializer):
@@ -104,7 +107,7 @@ class GoogleSerializer(Serializer):
     def get_place_details(self, data):
         return {'rating_count': data['user_ratings_total'],
                 'rating': data['rating'],
-                'raw': data}
+                'oem': data}
 
 
 class Provider(object):
