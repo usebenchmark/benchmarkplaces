@@ -144,12 +144,12 @@ class Google(Provider):
         else:
             raise APIError('An error occurred with %s API' % self.name)
 
-    def search_places(self, name, address, **kwargs):
+    def search_places(self, keyword, address, **kwargs):
         url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
         lat, lng = self.get_geo_coords(address)
         coords = '%s,%s' % (lat, lng,)
         params = {'key': GOOGLE_API_KEY,
-                  'keyword': name,
+                  'keyword': keyword,
                   'address': address,
                   'radius': RADIUS,
                   'location': coords}
