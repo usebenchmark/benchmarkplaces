@@ -3,6 +3,7 @@ import os
 import requests
 from rauth import OAuth1Session
 
+
 GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
 YELP_CONSUMER_KEY = os.environ.get('YELP_CONSUMER_KEY')
 YELP_CONSUMER_SECRET = os.environ.get('YELP_CONSUMER_SECRET')
@@ -44,17 +45,17 @@ class YelpSerializer(Serializer):
     def search_places(self, data):
         serialized = []
         for i in data:
-            address = ' '.join(i['location']['display_address'])
-            obj = {'address': address,
-                   'place_id': i['id'],
-                   'name': i['name'],
+            address = i.get('location', {}).get('display_address')
+            obj = {'address': ' '.join(address) if address else None,
+                   'place_id': i.get('id'),
+                   'name': i.get('name'),
                    'oem': i}
             serialized.append(obj)
         return serialized
 
     def get_place_details(self, data):
-        return {'rating_count': data['review_count'],
-                'rating': data['rating'],
+        return {'rating_count': data.get('review_count'),
+                'rating': data.get('rating'),
                 'oem': data}
 
 
@@ -62,17 +63,17 @@ class FacebookSerializer(Serializer):
     def search_places(self, data):
         serialized = []
         for i in data:
-            obj = {'address': i['location']['street'],
-                   'place_id': i['id'],
-                   'name': i['name'],
+            obj = {'address': i.get('location', {}).get('street'),
+                   'place_id': i.get('id'),
+                   'name': i.get('name'),
                    'oem': i}
             serialized.append(obj)
         return serialized
 
     def get_place_details(self, data):
-        return {'likes': data['likes'],
-                'checkin_count': data['checkins'],
-                'people_talking': data['talking_about_count'],
+        return {'likes': data.get('likes'),
+                'checkin_count': data.get('checkins'),
+                'people_talking': data.get('talking_about_count'),
                 'oem': data}
 
 
@@ -80,20 +81,20 @@ class FoursquareSerializer(Serializer):
     def search_places(self, data):
         serialized = []
         for i in data:
-            address = ' '.join(i['location']['formattedAddress'])
-            obj = {'address': address,
-                   'place_id': i['id'],
-                   'name': i['name'],
+            address = i.get('location', {}).get('formattedAddress')
+            obj = {'address': ' '.join(address) if address else None,
+                   'place_id': i.get('id'),
+                   'name': i.get('name'),
                    'oem': i}
             serialized.append(obj)
         return serialized
 
     def get_place_details(self, data):
-        return {'rating': data['rating'],
-                'checkin_count': data['stats']['checkinsCount'],
-                'likes': data['likes']['count'],
-                'user_count': data['stats']['usersCount'],
-                'tip_count': data['stats']['tipCount'],
+        return {'rating': data.get('rating'),
+                'checkin_count': data.get('stats', {}).get('checkinsCount'),
+                'likes': data.get('likes', {}).get('count'),
+                'user_count': data.get('stats', {}).get('usersCount'),
+                'tip_count': data.get('stats', {}).get('tipCount'),
                 'oem': data}
 
 
@@ -105,8 +106,8 @@ class GoogleSerializer(Serializer):
                               name='name')
 
     def get_place_details(self, data):
-        return {'rating_count': data['user_ratings_total'],
-                'rating': data['rating'],
+        return {'rating_count': data.get('user_ratings_total'),
+                'rating': data.get('rating'),
                 'oem': data}
 
 
@@ -138,8 +139,8 @@ class Google(Provider):
                 lat = data['results'][0]['geometry']['location']['lat']
                 lng = data['results'][0]['geometry']['location']['lng']
             except KeyError:
-                # TODO raise exception
-                pass
+                lat = None
+                lng = None
             return lat, lng
         else:
             raise APIError('An error occurred with %s API' % self.name)
@@ -156,7 +157,7 @@ class Google(Provider):
         params.update(**kwargs)
         res = requests.get(url, params=params)
 
-        if res.ok:
+        if res.ok and 'results' in res.json():
             return self.serializer.search_places(res.json()['results'])
         else:
             raise APIError('An error occurred with %s API' % self.name)
@@ -168,7 +169,7 @@ class Google(Provider):
         params.update(**kwargs)
         res = requests.get(url, params=params)
 
-        if res.ok:
+        if res.ok and 'result' in res.json():
             return self.serializer.get_place_details(res.json()['result'])
         else:
             raise APIError('An error occurred with %s API' % self.name)
@@ -191,7 +192,7 @@ class Yelp(Provider):
                                 access_token_secret=YELP_ACCESS_TOKEN_SECRET)
         res = session.get(url, params=params)
 
-        if res.ok:
+        if res.ok and 'businesses' in res.json():
             return self.serializer.search_places(res.json()['businesses'])
         else:
             raise APIError('An error occurred with %s API' % self.name)
@@ -230,9 +231,9 @@ class Foursquare(Provider):
                   'll': coords}
         params.update(**kwargs)
         res = requests.get(url, params=params)
-        if res.ok:
-            return self.serializer.search_places(
-                res.json()['response']['venues'])
+        venues = res.json().get('response', {}).get('venues')
+        if res.ok and venues:
+            return self.serializer.search_places(venues)
         else:
             raise APIError('An error occurred with %s API' % self.name)
 
@@ -242,9 +243,9 @@ class Foursquare(Provider):
                   'client_secret': FOURSQUARE_CLIENT_SECRET,
                   'v': FOURSQUARE_API_VERSION}
         res = requests.get(url, params=params)
-        if res.ok:
-            return self.serializer.get_place_details(
-                res.json()['response']['venue'])
+        venues = res.json().get('response', {}).get('venue')
+        if res.ok and venues:
+            return self.serializer.get_place_details(venues)
         else:
             raise APIError('An error occurred with %s API' % self.name)
 
@@ -258,7 +259,7 @@ class Facebook(Provider):
         access_token = '%s|%s' % (FACEBOOK_APP_ID, FACEBOOK_APP_SECRET,)
         google = Google()
         lat, lng = google.get_geo_coords(address)
-        coords = '%s,%s' % (lat, lng,)
+        coords = '%s,%s' % (lat, lng,) if lat and long else None
         params = {'access_token': access_token,
                   'type': 'place',
                   'q': name,
@@ -266,7 +267,7 @@ class Facebook(Provider):
                   'distance': RADIUS}
         params.update(**kwargs)
         res = requests.get(url, params=params)
-        if res.ok:
+        if res.ok and res.json.get('data'):
             return self.serializer.search_places(res.json()['data'])
         else:
             raise APIError('An error occurred with %s API' % self.name)
@@ -276,7 +277,7 @@ class Facebook(Provider):
         access_token = '%s|%s' % (FACEBOOK_APP_ID, FACEBOOK_APP_SECRET,)
         params = {'access_token': access_token}
         res = requests.get(url, params=params)
-        if res.ok:
+        if res.ok and res.json():
             return self.serializer.get_place_details(res.json())
         else:
             raise APIError('An error occurred with %s API' % self.name)
