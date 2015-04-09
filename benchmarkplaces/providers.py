@@ -232,7 +232,7 @@ class Foursquare(Provider):
         params.update(**kwargs)
         res = requests.get(url, params=params)
         venues = res.json().get('response', {}).get('venues')
-        if res.ok and venues:
+        if res.ok and venues is not None:
             return self.serializer.search_places(venues)
         else:
             raise APIError('An error occurred with %s API' % self.name)
@@ -244,7 +244,7 @@ class Foursquare(Provider):
                   'v': FOURSQUARE_API_VERSION}
         res = requests.get(url, params=params)
         venues = res.json().get('response', {}).get('venue')
-        if res.ok and venues:
+        if res.ok and venues is not None:
             return self.serializer.get_place_details(venues)
         else:
             raise APIError('An error occurred with %s API' % self.name)
@@ -267,7 +267,7 @@ class Facebook(Provider):
                   'distance': RADIUS}
         params.update(**kwargs)
         res = requests.get(url, params=params)
-        if res.ok and res.json.get('data'):
+        if res.ok and 'data' in res.json():
             return self.serializer.search_places(res.json()['data'])
         else:
             raise APIError('An error occurred with %s API' % self.name)
