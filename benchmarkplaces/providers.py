@@ -249,6 +249,18 @@ class Foursquare(Provider):
         else:
             raise APIError('An error occurred with %s API' % self.name)
 
+    def get_reviews(self, venue_id):
+        url = 'https://api.foursquare.com/v2/venues/%s/tips' % venue_id
+        params = {'client_id': FOURSQUARE_CLIENT_ID,
+                  'client_secret': FOURSQUARE_CLIENT_SECRET,
+                  'v': FOURSQUARE_API_VERSION}
+        res = requests.get(url, params=params)
+        tips = res.json().get('response', {}).get('tips', {}).get('items')
+        if res.ok and tips is not None:
+            return tips
+        else:
+            raise APIError('An error occurred with %s API' % self.name)
+
 
 class Facebook(Provider):
     name = 'facebook'
