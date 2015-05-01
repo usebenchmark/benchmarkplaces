@@ -177,7 +177,10 @@ class Google(Provider):
     def get_reviews(self, place_id, **kwargs):
         # wraps `get_place_details` for API purposes and because there is no
         # specific endpoint for reviews.
-        return self.get_place_details(place_id, **kwargs)
+        details = self.get_place_details(place_id, **kwargs)
+
+        reviews = details['reviews'] if 'reviews' in details else []
+        return reviews
 
 
 class Yelp(Provider):
