@@ -1,4 +1,7 @@
+import datetime
+import hashlib
 import os
+import sys
 
 import requests
 from rauth import OAuth1Session
@@ -16,6 +19,11 @@ FACEBOOK_APP_ID = os.environ.get('FACEBOOK_APP_ID')
 FACEBOOK_APP_SECRET = os.environ.get('FACEBOOK_APP_SECRET')
 
 RADIUS = 500  # meters
+
+
+def hashify(*args):
+    to_hash = '|'.join(args)
+    return hashlib.sha224(to_hash).hexdigest()
 
 
 class APIError(Exception):
@@ -97,6 +105,20 @@ class FoursquareSerializer(Serializer):
                 'tip_count': data.get('stats', {}).get('tipCount'),
                 'oem': data}
 
+    def get_reviews(self, data):
+        serialized = []
+        for x in data:
+            r = {}
+            r['text'] = x['text']
+            r['source_created_on'] = \
+                datetime.datetime.fromtimestamp(x['createdAt'])
+            r['review_id'] = x['id']
+            r['source'] = 'foursquare'
+            r['author'] = '%s %s' % (x['user'].get('firstName'),
+                                     x['user'].get('lastName'),)
+            serialized.append(r)
+        return serialized
+
 
 class GoogleSerializer(Serializer):
     def search_places(self, data):
@@ -110,11 +132,34 @@ class GoogleSerializer(Serializer):
                 'rating': data.get('rating'),
                 'oem': data}
 
+    def get_reviews(self, place_id, data):
+        serialized = []
+        for x in data:
+            r = {}
+            time = x['time'] * .001
+            r['text'] = x['text']
+            r['source_created_on'] = datetime.datetime.fromtimestamp(time)
+            r['source'] = 'google'
+
+            # google doesn't give us a review_id to work with because it's a
+            # sample so we generate one
+            r['review_id'] = hashify(place_id,
+                                     str(x['time']),
+                                     x['author_name'],
+                                     x['author_url'])
+            r['author'] = x['author_name']
+            serialized.append(r)
+        return serialized
+
 
 class Provider(object):
     def __init__(self):
         if self.serializer:
             self.serializer = self.serializer()
+
+    @classmethod
+    def source(self, name):
+        return getattr(sys.modules[__name__], name.capitalize())()
 
     def search_places(self, *args, **kwargs):
         raise NotImplementedError
@@ -175,12 +220,17 @@ class Google(Provider):
             raise APIError('An error occurred with %s API' % self.name)
 
     def get_reviews(self, place_id, **kwargs):
-        # wraps `get_place_details` for API purposes and because there is no
-        # specific endpoint for reviews.
-        details = self.get_place_details(place_id, **kwargs)
+        url = 'https://maps.googleapis.com/maps/api/place/details/json'
+        params = {'key': GOOGLE_API_KEY,
+                  'placeid': place_id}
+        params.update(**kwargs)
+        res = requests.get(url, params=params)
 
-        reviews = details['reviews'] if 'reviews' in details else []
-        return reviews
+        if res.ok:
+            reviews = res.json().get('result', {}).get('reviews', [])
+            return self.serializer.get_reviews(place_id, reviews)
+        else:
+            raise APIError('An error occurred with %s API' % self.name)
 
 
 class Yelp(Provider):
@@ -265,7 +315,7 @@ class Foursquare(Provider):
         res = requests.get(url, params=params)
         tips = res.json().get('response', {}).get('tips', {}).get('items')
         if res.ok and tips is not None:
-            return tips
+            return self.serializer.get_reviews(tips)
         else:
             raise APIError('An error occurred with %s API' % self.name)
 
