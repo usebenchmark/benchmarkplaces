@@ -174,6 +174,11 @@ class Google(Provider):
         else:
             raise APIError('An error occurred with %s API' % self.name)
 
+    def get_reviews(self, place_id, **kwargs):
+        # wraps `get_place_details` for API purposes and because there is no
+        # specific endpoint for reviews.
+        return self.get_place_details(place_id, **kwargs)
+
 
 class Yelp(Provider):
     name = 'yelp'
