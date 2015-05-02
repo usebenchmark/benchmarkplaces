@@ -23,7 +23,7 @@ RADIUS = 500  # meters
 
 def hashify(*args):
     to_hash = '|'.join(args)
-    return hashlib.sha224(to_hash).hexdigest()
+    return hashlib.sha224(to_hash.encode('utf-8')).hexdigest()
 
 
 class APIError(Exception):
