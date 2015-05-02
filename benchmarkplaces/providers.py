@@ -136,9 +136,8 @@ class GoogleSerializer(Serializer):
         serialized = []
         for x in data:
             r = {}
-            time = x['time'] * .001
             r['text'] = x['text']
-            r['source_created_on'] = datetime.datetime.fromtimestamp(time)
+            r['source_created_on'] = datetime.datetime.fromtimestamp(x['time'])
             r['source'] = 'google'
 
             # google doesn't give us a review_id to work with because it's a
