@@ -145,8 +145,7 @@ class GoogleSerializer(Serializer):
             # sample so we generate one
             r['review_id'] = hashify(place_id,
                                      str(x['time']),
-                                     x['author_name'],
-                                     x['author_url'])
+                                     x.get('text', ''))
             r['author'] = x['author_name']
             serialized.append(r)
         return serialized
