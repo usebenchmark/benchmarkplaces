@@ -26,12 +26,17 @@ def hashify(*args):
     return hashlib.sha224(to_hash.encode('utf-8')).hexdigest()
 
 
-class APIError(Exception):
-    def __init__(self, value):
-        self.value = value
+class SourceError(Exception):
+    def __init__(self, message, response):
+        self.message = message
+
+        try:
+            self.text = response.json()
+        except ValueError:
+            self.text = response.text
 
     def __str__(self):
-        return repr(self.value)
+        return repr(self.message)
 
 
 class Serializer(object):
@@ -186,7 +191,7 @@ class Google(Provider):
                 lng = None
             return lat, lng
         else:
-            raise APIError('An error occurred with %s API' % self.name)
+            raise SourceError('An error occurred with %s API' % self.name, res)
 
     def search_places(self, keyword, address, **kwargs):
         url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
@@ -203,7 +208,7 @@ class Google(Provider):
         if res.ok and 'results' in res.json():
             return self.serializer.search_places(res.json()['results'])
         else:
-            raise APIError('An error occurred with %s API' % self.name)
+            raise SourceError('An error occurred with %s API' % self.name, res)
 
     def get_place_details(self, place_id, **kwargs):
         url = 'https://maps.googleapis.com/maps/api/place/details/json'
@@ -215,7 +220,7 @@ class Google(Provider):
         if res.ok and 'result' in res.json():
             return self.serializer.get_place_details(res.json()['result'])
         else:
-            raise APIError('An error occurred with %s API' % self.name)
+            raise SourceError('An error occurred with %s API' % self.name, res)
 
     def get_reviews(self, place_id, **kwargs):
         url = 'https://maps.googleapis.com/maps/api/place/details/json'
@@ -228,7 +233,7 @@ class Google(Provider):
             reviews = res.json().get('result', {}).get('reviews', [])
             return self.serializer.get_reviews(place_id, reviews)
         else:
-            raise APIError('An error occurred with %s API' % self.name)
+            raise SourceError('An error occurred with %s API' % self.name, res)
 
 
 class Yelp(Provider):
@@ -251,7 +256,7 @@ class Yelp(Provider):
         if res.ok and 'businesses' in res.json():
             return self.serializer.search_places(res.json()['businesses'])
         else:
-            raise APIError('An error occurred with %s API' % self.name)
+            raise SourceError('An error occurred with %s API' % self.name, res)
 
     def get_place_details(self, yelp_id, **kwargs):
         url = 'http://api.yelp.com/v2/business/%s' % (yelp_id)
@@ -267,7 +272,7 @@ class Yelp(Provider):
         if res.ok:
             return self.serializer.get_place_details(res.json())
         else:
-            raise APIError('An error occurred with %s API' % self.name)
+            raise SourceError('An error occurred with %s API' % self.name, res)
 
 
 class Foursquare(Provider):
@@ -291,7 +296,7 @@ class Foursquare(Provider):
         if res.ok and venues is not None:
             return self.serializer.search_places(venues)
         else:
-            raise APIError('An error occurred with %s API' % self.name)
+            raise SourceError('An error occurred with %s API' % self.name, res)
 
     def get_place_details(self, venue_id):
         url = 'https://api.foursquare.com/v2/venues/%s' % (venue_id)
@@ -303,7 +308,7 @@ class Foursquare(Provider):
         if res.ok and venues is not None:
             return self.serializer.get_place_details(venues)
         else:
-            raise APIError('An error occurred with %s API' % self.name)
+            raise SourceError('An error occurred with %s API' % self.name, res)
 
     def get_reviews(self, venue_id):
         url = 'https://api.foursquare.com/v2/venues/%s/tips' % venue_id
@@ -315,7 +320,7 @@ class Foursquare(Provider):
         if res.ok and tips is not None:
             return self.serializer.get_reviews(tips)
         else:
-            raise APIError('An error occurred with %s API' % self.name)
+            raise SourceError('An error occurred with %s API' % self.name, res)
 
 
 class Facebook(Provider):
@@ -338,7 +343,7 @@ class Facebook(Provider):
         if res.ok and 'data' in res.json():
             return self.serializer.search_places(res.json()['data'])
         else:
-            raise APIError('An error occurred with %s API' % self.name)
+            raise SourceError('An error occurred with %s API' % self.name, res)
 
     def get_place_details(self, place_id, **kwargs):
         url = 'https://graph.facebook.com/%s' % place_id
@@ -348,4 +353,4 @@ class Facebook(Provider):
         if res.ok and res.json():
             return self.serializer.get_place_details(res.json())
         else:
-            raise APIError('An error occurred with %s API' % self.name)
+            raise SourceError('An error occurred with %s API' % self.name, res)
