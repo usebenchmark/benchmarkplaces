@@ -62,6 +62,7 @@ class YelpSerializer(Serializer):
             obj = {'address': ' '.join(address) if address else None,
                    'place_id': i.get('id'),
                    'name': i.get('name'),
+                   'url': i.get('url'),
                    'oem': i}
             serialized.append(obj)
         return serialized
@@ -79,7 +80,8 @@ class FacebookSerializer(Serializer):
             obj = {'address': i.get('location', {}).get('street'),
                    'place_id': i.get('id'),
                    'name': i.get('name'),
-                   'oem': i}
+                   'oem': i,
+                   'url': 'https://facebook.com/%s' % i.get('id')}
             serialized.append(obj)
         return serialized
 
@@ -206,9 +208,19 @@ class Google(Provider):
         res = requests.get(url, params=params)
 
         if res.ok and 'results' in res.json():
-            return self.serializer.search_places(res.json()['results'])
+            results = self.serializer.search_places(res.json()['results'])
         else:
             raise SourceError('An error occurred with %s API' % self.name, res)
+
+        # google doesn't provide the source url for a profile page so we
+        # have to make an extra request
+        # XXX this might be expensive in the future because of the extra
+        # requests, remove if too expensive
+        for x in results:
+            details = self.get_place_details(x['place_id'])
+            x['url'] = details['oem']['url']
+
+        return results
 
     def get_place_details(self, place_id, **kwargs):
         url = 'https://maps.googleapis.com/maps/api/place/details/json'
@@ -293,10 +305,21 @@ class Foursquare(Provider):
         params.update(**kwargs)
         res = requests.get(url, params=params)
         venues = res.json().get('response', {}).get('venues')
+
         if res.ok and venues is not None:
-            return self.serializer.search_places(venues)
+            results = self.serializer.search_places(venues)
         else:
             raise SourceError('An error occurred with %s API' % self.name, res)
+
+        # foursquare doesn't provide the source url for a profile page so we
+        # have to make an extra request
+        # XXX this might be expensive in the future because of the extra
+        # requests, remove if too expensive
+        for x in results:
+            details = self.get_place_details(x['place_id'])
+            x['url'] = details['oem']['canonicalUrl']
+
+        return results
 
     def get_place_details(self, venue_id):
         url = 'https://api.foursquare.com/v2/venues/%s' % (venue_id)
