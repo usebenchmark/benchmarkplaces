@@ -80,7 +80,8 @@ class FacebookSerializer(Serializer):
             obj = {'address': i.get('location', {}).get('street'),
                    'place_id': i.get('id'),
                    'name': i.get('name'),
-                   'oem': i}
+                   'oem': i,
+                   'url': 'https://facebook.com/%s' % i.get('id')}
             serialized.append(obj)
         return serialized
 
