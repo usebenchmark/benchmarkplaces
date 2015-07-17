@@ -295,10 +295,24 @@ class Foursquare(Provider):
         params.update(**kwargs)
         res = requests.get(url, params=params)
         venues = res.json().get('response', {}).get('venues')
+
         if res.ok and venues is not None:
-            return self.serializer.search_places(venues)
+            results = self.serializer.search_places(venues)
         else:
             raise SourceError('An error occurred with %s API' % self.name, res)
+
+        # foursquare doesn't provide the source url for a profile page so we
+        # have to make an extra request
+        # XXX this might be expensive in the future because of the extra
+        # requests, remove if too expensive
+        for x in results:
+            details = self.get_place_details(x['place_id'])
+            x['url'] = details['oem']['canonicalUrl']
+
+        return results
+
+
+
 
     def get_place_details(self, venue_id):
         url = 'https://api.foursquare.com/v2/venues/%s' % (venue_id)
