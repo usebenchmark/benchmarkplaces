@@ -311,9 +311,6 @@ class Foursquare(Provider):
 
         return results
 
-
-
-
     def get_place_details(self, venue_id):
         url = 'https://api.foursquare.com/v2/venues/%s' % (venue_id)
         params = {'client_id': FOURSQUARE_CLIENT_ID,
