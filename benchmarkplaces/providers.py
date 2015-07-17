@@ -208,9 +208,19 @@ class Google(Provider):
         res = requests.get(url, params=params)
 
         if res.ok and 'results' in res.json():
-            return self.serializer.search_places(res.json()['results'])
+            results = self.serializer.search_places(res.json()['results'])
         else:
             raise SourceError('An error occurred with %s API' % self.name, res)
+
+        # google doesn't provide the source url for a profile page so we
+        # have to make an extra request
+        # XXX this might be expensive in the future because of the extra
+        # requests, remove if too expensive
+        for x in results:
+            details = self.get_place_details(x['place_id'])
+            x['url'] = details['oem']['url']
+
+        return results
 
     def get_place_details(self, place_id, **kwargs):
         url = 'https://maps.googleapis.com/maps/api/place/details/json'
