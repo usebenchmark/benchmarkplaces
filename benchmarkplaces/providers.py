@@ -62,6 +62,7 @@ class YelpSerializer(Serializer):
             obj = {'address': ' '.join(address) if address else None,
                    'place_id': i.get('id'),
                    'name': i.get('name'),
+                   'url': i.get('url'),
                    'oem': i}
             serialized.append(obj)
         return serialized
