@@ -5,6 +5,7 @@ import sys
 
 import requests
 from rauth import OAuth1Session
+from errors import SourceError
 
 
 GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
@@ -24,19 +25,6 @@ RADIUS = 500  # meters
 def hashify(*args):
     to_hash = '|'.join(args)
     return hashlib.sha224(to_hash.encode('utf-8')).hexdigest()
-
-
-class SourceError(Exception):
-    def __init__(self, message, response):
-        self.message = message
-
-        try:
-            self.text = response.json()
-        except ValueError:
-            self.text = response.text
-
-    def __str__(self):
-        return repr(self.message)
 
 
 class Serializer(object):
