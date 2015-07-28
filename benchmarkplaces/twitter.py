@@ -10,6 +10,7 @@ ACCESS_TOKEN = os.environ.get('ACCESS_TOKEN')
 ACCESS_TOKEN_SECRET = os.environ.get('ACCESS_TOKEN_SECRET')
 BASE_URL = 'https://api.twitter.com/1.1/'
 FORMAT = '%a %b %d %H:%M:%S +0000 %Y' # twitter time format
+COUNT = 100 # default tweet count
 
 consumer_creds = {'consumer_key': CONSUMER_KEY,
                   'consumer_secret': CONSUMER_SECRET}
@@ -52,7 +53,7 @@ class Twitter(OAuth1Service):
         super(Twitter, self).__init__(*a, **kw)
 
     def search_tweets(self, q, **kwargs):
-        params = {'q': q}
+        params = {'q': q, 'count': COUNT}
         params.update(kwargs)
         response = self.get_session().get('search/tweets.json',
                                           params=params)
