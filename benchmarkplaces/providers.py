@@ -111,6 +111,7 @@ class FoursquareSerializer(Serializer):
             r['source'] = 'foursquare'
             r['author'] = '%s %s' % (x['user'].get('firstName'),
                                      x['user'].get('lastName'),)
+            r['oem'] = x
             serialized.append(r)
         return serialized
 
@@ -141,6 +142,7 @@ class GoogleSerializer(Serializer):
                                      str(x['time']),
                                      x.get('text', ''))
             r['author'] = x.get('author_name')
+            r['oem'] = x
             serialized.append(r)
         return serialized
 
