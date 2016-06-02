@@ -124,8 +124,8 @@ class GoogleSerializer(Serializer):
                               name='name')
 
     def get_place_details(self, data):
-        return {'rating_count': data.get('user_ratings_total'),
-                'rating': data.get('rating'),
+        return {'rating_count': data.get('user_ratings_total', 0),
+                'rating': data.get('rating', 0),
                 'oem': data}
 
     def get_reviews(self, place_id, data):
