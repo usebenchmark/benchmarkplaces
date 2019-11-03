@@ -1,2 +1,2 @@
 rauth==0.7.1
-requests==2.5.3
+requests==2.20.0
